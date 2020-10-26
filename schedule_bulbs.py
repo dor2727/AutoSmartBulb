@@ -30,10 +30,23 @@ LOG_FILE = open(os.path.join(os.path.dirname(__file__), "log.log"), "a")
 
 # utils
 def log(s):
+	# print & write to file
 	print(s)
 	LOG_FILE.write(s)
 	LOG_FILE.write('\n')
 	LOG_FILE.flush()
+
+# adding functionality to yeelight
+def yeelight_to_rgb(number):
+	"""
+	Calculate individual RGB values from the YeeLight-compatible single color value.
+	"""
+	red   = number // 256**2
+	green = (number // 256) % 256
+	blue  = number % 256
+
+	return red, green, blue
+yeelight.utils.yeelight_to_rgb = yeelight_to_rgb
 
 
 class LimitedList(list):
@@ -97,10 +110,16 @@ class Bulbs(object):
 	def toggle(self):
 		log("[*] bulbs - toggling")
 		return self._foreach(yeelight.Bulb.toggle)
+	def set_rgb(self, r, g, b):
+		log(f"[*] bulbs - setting color - red = {r:03d} - green = {g:03d} - blue = {b:03d}")
+		return self._foreach(yeelight.Bulb.set_rgb, r, g, b)
 	def set_brightness(self, br):
 		log(f"[*] bulbs - setting brightness - {br}")
 		return self._foreach(yeelight.Bulb.set_brightness, br)
 
+	def get_rgb(self):
+		rgb = self.get_properties("rgb")
+		return [yeelight_to_rgb(i) for i in rgb]
 	def increase_brightness(self, amount=1):
 		# get current brightness
 		current_brightness = self.get_properties("bright")
