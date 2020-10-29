@@ -74,7 +74,7 @@ class Bulbs(object):
 			bulbs = yeelight.discover_bulbs()
 			self.ips = sorted([i["ip"] for i in bulbs])
 
-		self.bulbs = [yeelight.Bulb(ip) for ip in ips]
+		self.bulbs = [yeelight.Bulb(ip) for ip in self.ips]
 
 	def _foreach(self, method, *args, **kwargs):
 		res = [
