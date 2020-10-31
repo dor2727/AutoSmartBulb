@@ -50,6 +50,9 @@ def yeelight_to_rgb(number):
 	"""
 	Calculate individual RGB values from the YeeLight-compatible single color value.
 	"""
+	# may throw an error
+	if type(number) is not int:
+		number = int(number)
 	red   = number // 256**2
 	green = (number // 256) % 256
 	blue  = number % 256
