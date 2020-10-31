@@ -24,17 +24,26 @@ LONGITUDE = 34.781769
 brightness_high = 100
 brightness_low  = 1
 
-SLEEP_TIME = datetime.time(22, 0)
+SLEEP_TIME = datetime.time(21, 0)
+# to disable sunset offset, set to timedelta() - 0 seconds, or set to False
+SUNSET_OFFSET = - datetime.timedelta(hours=1, minutes=15)
 
 LOG_FILE = open(os.path.join(os.path.dirname(__file__), "log.log"), "a")
+VERBOSE = True
 
 # utils
-def log(s):
-	# print & write to file
-	print(s)
-	LOG_FILE.write(s)
-	LOG_FILE.write('\n')
-	LOG_FILE.flush()
+def log(s, verbose=False):
+	"""
+	print & write to file
+
+	param verbose (lowercase) - whether this message is verbose
+	global VERBOSE (uppercase) - whether to pring verbose messages
+	"""
+	if (verbose and VERBOSE) or (not verbose):
+		print(s)
+		LOG_FILE.write(s)
+		LOG_FILE.write('\n')
+		LOG_FILE.flush()
 
 # adding functionality to yeelight
 def yeelight_to_rgb(number):
@@ -73,6 +82,8 @@ class Bulbs(object):
 		else:
 			bulbs = yeelight.discover_bulbs()
 			self.ips = sorted([i["ip"] for i in bulbs])
+			for ip in self.ips:
+				log(f"    [*] found ip: {ip}", verbose=True)
 
 		self.bulbs = [yeelight.Bulb(ip) for ip in self.ips]
 
@@ -177,7 +188,7 @@ class SuntimeScheduler(object):
 			# convert to str format
 			time_str = time_obj.strftime("%H:%M:%S")
 			# schedule the brightness
-			log(f"    [*] scheduler - br {self.brightness_high - i:02d} at {time_str}")
+			log(f"    [*] scheduler - br {self.brightness_high - i:02d} at {time_str}", verbose=True)
 			schedule.every().day.at(time_str).do(self.bulbs.set_brightness, self.brightness_high - i)
 
 	#
@@ -190,9 +201,10 @@ class SuntimeScheduler(object):
 			return self.sun.get_local_sunrise_time(date).astimezone()
 	def get_sunset_time(self, date : datetime.date = None):
 		if date is None:
-			return self.sun.get_sunset_time().astimezone()
+			sunset = self.sun.get_sunset_time().astimezone()
 		else:
-			return self.sun.get_local_sunset_time(date).astimezone()
+			sunset = self.sun.get_local_sunset_time(date).astimezone()
+		return sunset + SUNSET_OFFSET
 
 	def turn_on(self):
 		self.bulbs.turn_on()
